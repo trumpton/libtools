@@ -19,6 +19,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <ifaddrs.h>
+#include <stdarg.h>
 
 #include "../log.h"
 #include "../mem.h"
@@ -447,6 +448,38 @@ char *hgeturi(IHTTPD *hh)
 
 ///////////////////////////////////////////////////////////////////////
 //
+// @brief Returns nth URI ? Parameter
+// param[in] hh Handle of HTTPD session
+// param[in] n Index of parameter to return
+// @return Transient pointer to parameter name or NULL if not found
+//
+
+char *hgeturiparamname(HTTPD *hh, int n) 
+{
+  static char staticresponse[128] ;
+
+  if (n<0 || n>=hh->uricount) return NULL ;
+  int p=0 ;
+
+  // Skip to record  
+  while (n>0) {
+    while (hh->uri[p]!='\0') p++ ;
+    p++ ;
+    n-- ;
+  }
+
+  int i ;
+  for (i=0; i<sizeof(staticresponse)-1 && hh->uri[p+i]!='\0' && hh->uri[p+i]!='='; i++) {
+    staticresponse[i] = hh->uri[p+i] ;
+  }
+  staticresponse[i]='\0' ;
+
+  return staticresponse;
+}
+
+
+///////////////////////////////////////////////////////////////////////
+//
 // @brief Returns URI ? Parameter
 // param[in] hh Handle of HTTPD session
 // param[in] param Parameter to search for
@@ -547,9 +580,31 @@ char *hgetbody(IHTTPD *hh)
 // param[in] body Contents for body (or NULL if no body)
 // @return true on success
 
-int hsend(IHTTPD *hh, int code, char *contenttype, char *body) 
+int hsend(IHTTPD *hh, int code, char *contenttype, char *body, ...) 
 {
-  return hsendb(hh, code, contenttype, body, body?strlen(body):0) ;
+  int response ;
+  va_list args;
+  char *messagebuf=NULL ;
+
+  if (!hh || !contenttype || !body || *body=='\0') return 0 ;
+
+  // Expand varargs
+
+  va_start (args, body);
+  size_t messagelen=vsnprintf(messagebuf, 0, body, args) ;
+
+  messagebuf=malloc(messagelen+1) ;
+  if (!messagebuf) return 0 ;
+
+  va_start (args, body);
+  vsnprintf(messagebuf, messagelen+1, body, args) ;
+
+  response = hsendb(hh, code, contenttype, messagebuf, strlen(messagebuf)) ;
+
+  free(messagebuf) ;
+
+  return response ;
+
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -600,8 +655,21 @@ int hsendb(IHTTPD *hh, int code, char *contenttype, char *body, int bodylen)
 
   headlen = strlen(head) ;
 
-  success = ( write(hh->fd, head, headlen)==headlen &&
-              write(hh->fd, body, bodylen)==bodylen ) ;
+  
+  success = (write(hh->fd, head, headlen)==headlen) ;
+
+  int written, writepos=0 ;
+
+  do {
+    written = write(hh->fd, &body[writepos], bodylen-writepos) ;
+    if (written<0 && (errno==EAGAIN || errno==EWOULDBLOCK) ) {
+      usleep(50) ;
+      written=0 ;
+    } else {
+      writepos+=written ;
+    }
+  } while (writepos<bodylen && written>=0) ;
+
 
 fail:
 

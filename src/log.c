@@ -14,8 +14,9 @@
 #include "../log.h"
 
 
-static char *_config_logname ;
-FILE * _log_snoopfh ;
+static char *_config_logname=NULL ;
+FILE * _log_snoopfh=NULL ;
+int _log_level=0 ;
 
 void logopen(char *appname)
 {
@@ -30,38 +31,46 @@ void logopen(char *appname)
 void logmsg(int level, char *format, ...)
 {
 #ifdef DEBUG
-  time_t currenttime=time(NULL) ;
-  struct tm *tmb ;
-  tmb=localtime(&currenttime) ;
- 
-  printf("%02d:%02d:%02d %s (%d) %s:", 
-    tmb->tm_hour, tmb->tm_min, tmb->tm_sec, 
-    _config_logname, 
-    getpid(),  
-    (level==LOG_EMERG)?"emergency":
-    (level==LOG_ALERT)?"alert":
-    (level==LOG_CRIT)?"critical":
-    (level==LOG_ERR)?"error":
-    (level==LOG_WARNING)?"warning":
-    (level==LOG_NOTICE)?"notice":
-    (level==LOG_INFO)?"info":
-    (level==LOG_DEBUG)?"debug":
-    (level==LOG_INT)?"internal":
-    "??????") ;
-  va_list args;
-  va_start(args, format);
-  vfprintf(stdout, format, args);
-  va_end(args);  
-  printf("\n") ;
-  fflush(stdout) ;
+
+  if (level<_log_level) {
+
+    time_t currenttime=time(NULL) ;
+    struct tm *tmb ;
+    tmb=localtime(&currenttime) ;
+
+    printf("%02d:%02d:%02d %s (%d) %s:", 
+      tmb->tm_hour, tmb->tm_min, tmb->tm_sec, 
+      _config_logname, 
+      getpid(),  
+      (level==LOG_EMERG)?"emergency":
+      (level==LOG_ALERT)?"alert":
+      (level==LOG_CRIT)?"critical":
+      (level==LOG_ERR)?"error":
+      (level==LOG_WARNING)?"warning":
+      (level==LOG_NOTICE)?"notice":
+      (level==LOG_INFO)?"info":
+      (level==LOG_DEBUG)?"debug":
+      (level==LOG_INT)?"internal":
+      "??????") ;
+    va_list args;
+    va_start(args, format);
+    vfprintf(stdout, format, args);
+    va_end(args);  
+    printf("\n") ;
+    fflush(stdout) ;
+  }
+
 #else
+
   if (level!=LOG_INT) {
     va_list args ;
     va_start(args, format) ;
     vsyslog(level, format, args) ;
     va_end(args) ;
   }
+
 #endif
+
 }
 
 void logsetsnoopfd(int fd) 
@@ -177,20 +186,31 @@ int logsetlevel(char *sysloglevel) {
 
   if (strcmp(sysloglevel, "emergency")==0) {
     setlogmask(LOG_UPTO(LOG_EMERG)) ;
+    _log_level=LOG_EMERG ;
   } else if (strcmp(sysloglevel, "alert")==0) {
     setlogmask(LOG_UPTO(LOG_ALERT)) ;
+    _log_level=LOG_ALERT ;
   } else if (strcmp(sysloglevel, "critical")==0) {
     setlogmask(LOG_UPTO(LOG_CRIT)) ;
+    _log_level=LOG_CRIT ;
   } else if (strcmp(sysloglevel, "error")==0) {
     setlogmask(LOG_UPTO(LOG_ERR)) ;
+    _log_level=LOG_ERR ;
   } else if (strcmp(sysloglevel, "warning")==0) {
     setlogmask(LOG_UPTO(LOG_WARNING)) ;
+    _log_level=LOG_WARNING ;
   } else if (strcmp(sysloglevel, "notice")==0) {
     setlogmask(LOG_UPTO(LOG_NOTICE)) ;
+    _log_level=LOG_NOTICE ;
   } else if (strcmp(sysloglevel, "info")==0) {
     setlogmask(LOG_UPTO(LOG_INFO)) ;
+    _log_level=LOG_INFO ;
   } else if (strcmp(sysloglevel, "debug")==0) {
     setlogmask(LOG_UPTO(LOG_DEBUG)) ;
+    _log_level=LOG_DEBUG ;
+  } else if (strcmp(sysloglevel, "internal")==0) {
+    setlogmask(LOG_UPTO(LOG_DEBUG)) ;
+    _log_level=LOG_INT ;
   } else {
     // Unrecognised log level, so default to NOTICE
     setlogmask(LOG_UPTO(LOG_NOTICE)) ;

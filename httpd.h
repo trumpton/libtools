@@ -133,10 +133,20 @@ char *hgeturi(HTTPD *hh) ;
 
 
 //
+// @brief Returns nth URI ? Parameter
+// param[in] hh Handle of HTTPD session
+// param[in] n Index of parameter to return
+// @return Transient pointer to parameter name or NULL if not found
+//
+
+char *hgeturiparamname(HTTPD *hh, int n) ;
+
+
+//
 // @brief Returns URI ? Parameter
 // param[in] hh Handle of HTTPD session
 // param[in] param Parameter to search for
-// @return Transient pointer to parameter, or NULL if not found
+// @return Transient pointer to parameter value, or NULL if not found
 //
 
 char *hgeturiparamstr(HTTPD *hh, char *param) ;
@@ -183,7 +193,7 @@ char *hgetbody(HTTPD *hh) ;
 // param[in] body Contents for body (or NULL if no body)
 // @return true on success
 
-int hsend(HTTPD *hh, int code, char *contenttype, char *body) ;
+int hsend(HTTPD *hh, int code, char *contenttype, char *body, ...) ;
 
 
 ///////////////////////////////////////////////////////////////////////
