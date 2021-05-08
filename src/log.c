@@ -32,7 +32,7 @@ void logmsg(int level, char *format, ...)
 {
 #ifdef DEBUG
 
-  if (level<_log_level) {
+  if (level<=_log_level) {
 
     time_t currenttime=time(NULL) ;
     struct tm *tmb ;
