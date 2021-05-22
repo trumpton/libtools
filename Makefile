@@ -5,7 +5,7 @@
 LIBRARY := libtools.a
 LIBDBG := libtools-dbg.a
 
-SOURCES := src/httpd.c src/str.c src/log.c src/mem.c src/mdns.c src/rdata.c 
+SOURCES := src/httpd.c src/str.c src/log.c src/mem.c src/mdns.c src/rdata.c src/execute.c
 
 #
 #
