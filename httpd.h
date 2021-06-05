@@ -19,7 +19,9 @@
 //   int hrecv(HTTPD *hh) ;
 //   int hfd(HTTPD *hh) ;
 //   char *hgeturi(HTTPD *hh) ;
-//   char *hgeturiparam(HTTPD *hh, char *param) ;
+//   char *hgeturiparamstr(HTTPD *hh, char *param) ;
+//   int hgeturiparamint(HTTPD *hh, char *param, int *i) ;
+//   int hgeturiparamfloat(HTTPD *hh, char *param, float *f) ;
 //   char *hgetbody(HTTPD *hh) ;
 //   int hclose(HTTPD *hh) ;
 //
