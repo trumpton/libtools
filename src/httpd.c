@@ -239,7 +239,7 @@ char *hpeeripaddress(IHTTPD *hh)
 int hpeerport(IHTTPD *hh) 
 {
   if (!hh) return 0 ;
-  else hh->peerport ;
+  else return hh->peerport ;
 }
 
 
